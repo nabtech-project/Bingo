@@ -3,67 +3,131 @@
 
 <head>
     <meta charset="UTF-8">
-    <title>Bingo Multi/Single with Own Board & Modals</title>
+    <title>Bingo Game – NabTech</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <!-- Firebase -->
     <script src="https://www.gstatic.com/firebasejs/12.1.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/12.1.0/firebase-database-compat.js"></script>
     <style>
         body {
             font-family: 'Segoe UI', sans-serif;
             margin: 0;
-            background: #f5f7fa;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        #welcomeScreen {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
             text-align: center;
+            background: linear-gradient(135deg, #2980b9, #6dd5fa);
+            color: white;
+            padding: 20px;
         }
 
-        h1 {
-            padding: 20px 0 0;
-            margin: 0;
+        #welcomeScreen h1 {
+            font-size: 2.4em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
         }
 
-        button {
-            border: none;
-            border-radius: 6px;
-            padding: 10px 20px;
-            cursor: pointer;
-            font-size: 16px;
+        #welcomeScreen p {
+            font-size: 1.2em;
+            max-width: 400px;
+            margin: 0 auto 30px;
         }
 
-        .primary {
+        .mode-btn {
             background: #289944;
             color: white;
+            padding: 12px 20px;
+            margin: 10px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1.1em;
+            transition: background 0.3s;
         }
 
-        .primary:hover {
-            background: #1e7836;
+        .mode-btn:hover {
+            background: #1e7a36;
         }
 
-        .secondary {
-            background: #ccc;
+        footer {
+            background: #222;
+            color: white;
+            text-align: center;
+            padding: 8px 0;
+            font-size: 0.9em;
         }
 
-        #modeSelect {
-            margin: 15px 0;
+        #gameArea {
+            flex: 1;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            background: linear-gradient(135deg, #e0eafc, #cfdef3);
+            position: relative;
+        }
+
+        #backBtn {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            background: #c0392b;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            padding: 6px 12px;
+            cursor: pointer;
+            font-size: 14px;
+            z-index: 10;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+        }
+
+        #backBtn:hover {
+            background: #a93226;
+        }
+
+        #turnLabel {
+            font-weight: bold;
+            font-size: 1.2em;
+            margin: 60px 0 10px;
+        }
+
+        #bingoProgress {
+            font-size: 28px;
+            letter-spacing: 12px;
+            color: #bbb;
+            font-weight: bold;
+            margin-bottom: 12px;
+        }
+
+        #bingoProgress .active {
+            color: #289944;
         }
 
         .board {
             display: grid;
-            grid-template-columns: repeat(5, 60px);
+            grid-template-columns: repeat(5, 70px);
             gap: 6px;
-            margin: 20px auto;
+            justify-content: center;
         }
 
         .cell {
             background: white;
             border: 1px solid #aaa;
-            border-radius: 4px;
+            border-radius: 6px;
             display: flex;
             align-items: center;
             justify-content: center;
-            height: 60px;
-            font-size: 18px;
+            height: 70px;
+            font-size: 20px;
             font-weight: bold;
-            cursor: pointer;
         }
 
         .marked {
@@ -71,51 +135,79 @@
             color: white;
         }
 
+        #controls {
+            margin-top: 15px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+        }
+
+        #calledNumber {
+            padding: 10px;
+            font-size: 16px;
+            border-radius: 6px;
+            border: 1px solid #ccc;
+            width: 160px;
+            text-align: center;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        #calledNumber:disabled {
+            background: #f1f1f1;
+        }
+
+        #calledNumber:focus:not(:disabled) {
+            border-color: #289944;
+        }
+
         #historyBox {
             background: white;
-            border-radius: 8px;
-            padding: 8px 14px;
-            margin-top: 12px;
-            display: inline-block;
-            min-width: 180px;
+            padding: 8px 12px;
+            border-radius: 6px;
+            margin-top: 10px;
         }
 
         #historyNums span {
-            display: inline-block;
-            margin: 2px;
-            padding: 2px 6px;
-            border-radius: 4px;
             background: #eee;
+            padding: 3px 6px;
+            margin: 2px;
+            border-radius: 4px;
+            display: inline-block;
+            font-size: 14px;
         }
 
         #status {
             font-weight: bold;
             margin: 14px;
             min-height: 24px;
+            font-size: 18px;
         }
 
-        /* Modal */
         .modal-overlay {
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0, 0, 0, 0.6);
             display: none;
+            background: rgba(0, 0, 0, 0.5);
             align-items: center;
             justify-content: center;
             z-index: 99;
         }
 
         .modal {
-            background: white;
-            border-radius: 12px;
+            background: #fff;
             padding: 20px;
-            max-width: 320px;
+            border-radius: 8px;
             width: 90%;
+            max-width: 360px;
             text-align: center;
+            position: relative;
             animation: pop 0.3s ease;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
         }
 
         @keyframes pop {
@@ -130,54 +222,66 @@
             }
         }
 
-        .modal h2 {
-            margin: 0 0 10px;
+        .close-btn {
+            position: absolute;
+            top: 10px;
+            right: 14px;
+            font-size: 24px;
+            cursor: pointer;
+            color: #888;
         }
 
-        .modal input {
-            padding: 8px;
-            width: 90%;
-            margin-top: 10px;
-        }
-
-        .modal button {
-            margin-top: 14px;
+        .close-btn:hover {
+            color: #000;
         }
     </style>
 </head>
 
 <body>
 
-    <h1>🎯 Bingo (1–25)</h1>
-    <div id="modeSelect">
-        <button class="primary" id="btnSingle">Single Player</button>
-        <button class="primary" id="btnMulti">Multiplayer</button>
+    <div id="welcomeScreen">
+        <h1>🎯 Bingo 1–25</h1>
+        <p>"Fun, Fast & Fair – Experience the thrill of Bingo like never before!"</p>
+        <button class="mode-btn" id="btnSingle">Single Player</button>
+        <button class="mode-btn" id="btnMulti">Multiplayer</button>
     </div>
 
-    <div id="gameArea" style="display:none;">
+    <div id="gameArea">
+        <button id="backBtn" onclick="handleBack()">⬅ Back</button>
+        <div id="turnLabel"></div>
+        <div id="bingoProgress">
+            <span class="letter">B</span>
+            <span class="letter">I</span>
+            <span class="letter">N</span>
+            <span class="letter">G</span>
+            <span class="letter">O</span>
+        </div>
         <h3 id="playerLabel"></h3>
         <div id="playerBoard" class="board"></div>
         <div id="controls">
             <input type="number" min="1" max="25" id="calledNumber" placeholder="Enter number">
-            <button class="primary" id="btnCall">Call Number</button>
-            <button class="secondary" id="btnNewGame">New Game</button>
+            <button class="mode-btn" id="btnCall">Call Number</button>
         </div>
-        <div id="historyBox"><b>History:</b>
+        <div id="historyBox"><b>History: </b>
             <div id="historyNums"></div>
         </div>
         <div id="status"></div>
     </div>
 
-    <!-- Modals -->
+    <footer>© <span id="year"></span> NabTech – All Rights Reserved</footer>
+
     <div class="modal-overlay" id="modalOverlay">
-        <div class="modal" id="modalContent"></div>
+        <div class="modal" id="modalContent">
+            <span class="close-btn" onclick="closeModal()">&times;</span>
+        </div>
     </div>
 
     <audio id="markSound" src="https://actions.google.com/sounds/v1/cartoon/wood_plank_flicks.ogg"></audio>
     <audio id="winSound" src="https://actions.google.com/sounds/v1/alarms/alarm_clock.ogg"></audio>
 
     <script>
-        /* ==== Firebase ==== */
+        // Firebase setup
+        document.getElementById('year').textContent = new Date().getFullYear();
         const firebaseConfig = {
             apiKey: "AIzaSyCboYlDXD-nX10yHeJYD6bg1g5Lh1FZmfY",
             authDomain: "bingo-86f88.firebaseapp.com",
@@ -190,10 +294,13 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
 
-        /* ==== State ==== */
-        let mode = "single", playerId = null, roomCode = null, board = [], marks = [], calledNumbers = [], gameOver = false, isCreator = false;
+        // state vars
+        let mode = "single", playerId = null, roomCode = null;
+        let board = [], marks = [], calledNumbers = [], gameOver = false, yourTurn = true;
+        // AI vars
+        let aiBoard = [], aiMarks = [];
 
-        /* ==== Helpers ==== */
+        // helpers
         function generateBoard() {
             let nums = Array.from({ length: 25 }, (_, i) => i + 1);
             nums.sort(() => Math.random() - 0.5);
@@ -214,17 +321,8 @@
             const cont = document.getElementById('historyNums');
             cont.innerHTML = '';
             calledNumbers.forEach(n => {
-                let sp = document.createElement('span');
-                sp.textContent = n;
-                cont.appendChild(sp);
+                let sp = document.createElement('span'); sp.textContent = n; cont.appendChild(sp);
             });
-        }
-        function showModal(html) {
-            document.getElementById('modalContent').innerHTML = html;
-            document.getElementById('modalOverlay').style.display = 'flex';
-        }
-        function closeModal() {
-            document.getElementById('modalOverlay').style.display = 'none';
         }
         function countLines(m) {
             let lines = 0;
@@ -234,106 +332,148 @@
             if ([4, 8, 12, 16, 20].every(i => m[i])) lines++;
             return lines;
         }
+        function updateBingoLetters(lines) {
+            document.querySelectorAll('#bingoProgress .letter').forEach((l, idx) => {
+                l.classList.toggle('active', idx < lines);
+            });
+        }
+        function showModalBody(html) {
+            document.getElementById('modalContent').innerHTML = '<span class="close-btn" onclick="closeModal()">&times;</span>' + html;
+            document.getElementById('modalOverlay').style.display = 'flex';
+        }
+        function closeModal() { document.getElementById('modalOverlay').style.display = 'none'; }
+        function updateTurnLabel() {
+            document.getElementById('turnLabel').textContent = yourTurn ? "🔵 Your Turn" : (mode === "single" ? "🤖 AI's Turn" : "🟢 Opponent's Turn");
+            document.getElementById('calledNumber').disabled = !yourTurn || gameOver;
+            document.getElementById('btnCall').disabled = !yourTurn || gameOver;
+        }
+        function handleBack() {
+            if (gameOver) { resetToWelcome(); }
+            else if (calledNumbers.length > 0) {
+                showModalBody(`<h2>Leave Game?</h2><p>Data will be lost. Continue?</p>
+      <button class="mode-btn" onclick="confirmBack()">Yes</button>
+      <button class="mode-btn" style="background:#999" onclick="closeModal()">Cancel</button>`);
+            } else resetToWelcome();
+        }
+        function confirmBack() { closeModal(); resetToWelcome(); }
+        function resetToWelcome() {
+            document.getElementById('gameArea').style.display = 'none';
+            document.getElementById('welcomeScreen').style.display = 'flex';
+            calledNumbers = []; gameOver = false; board = []; marks = [];
+        }
 
-        /* ==== Single Player ==== */
+        // single player
         function setupSingle() {
-            playerId = "YOU";
-            board = generateBoard();
-            marks = Array(25).fill(false);
-            calledNumbers = []; gameOver = false;
+            board = generateBoard(); aiBoard = generateBoard();
+            marks = Array(25).fill(false); aiMarks = Array(25).fill(false);
+            calledNumbers = []; gameOver = false; yourTurn = true;
             document.getElementById('playerLabel').textContent = "You";
-            renderBoard(); renderHistory();
-            document.getElementById('gameArea').style.display = '';
-            document.getElementById('status').textContent = '';
+            document.getElementById('welcomeScreen').style.display = 'none';
+            document.getElementById('gameArea').style.display = 'flex';
+            renderBoard(); renderHistory(); updateTurnLabel(); updateBingoLetters(0);
         }
         function callNumberSingle(num) {
-            if (!num || num < 1 || num > 25 || calledNumbers.includes(num) || gameOver) return;
+            if (!yourTurn || !num || num < 1 || num > 25 || calledNumbers.includes(num) || gameOver) return;
             calledNumbers.push(num);
             board.forEach((val, idx) => { if (val === num) marks[idx] = true; });
+            aiBoard.forEach((val, idx) => { if (val === num) aiMarks[idx] = true; });
             document.getElementById('markSound').play();
-            renderBoard(); renderHistory();
-            if (countLines(marks) >= 5) {
-                gameOver = true; document.getElementById('winSound').play();
-                showModal(`<h2>🎉 You won!</h2><button class="primary" onclick="closeModal()">OK</button>`);
-            }
+            renderBoard(); renderHistory(); updateBingoLetters(countLines(marks));
+            if (checkWinSingle()) return;
+            yourTurn = false; updateTurnLabel(); setTimeout(aiPlay, 800);
+        }
+        function aiPlay() {
+            let avail = Array.from({ length: 25 }, (_, i) => i + 1).filter(n => !calledNumbers.includes(n));
+            if (avail.length === 0) return;
+            let pick = avail[Math.floor(Math.random() * avail.length)];
+            calledNumbers.push(pick);
+            aiBoard.forEach((val, idx) => { if (val === pick) aiMarks[idx] = true; });
+            board.forEach((val, idx) => { if (val === pick) marks[idx] = true; });
+            document.getElementById('markSound').play();
+            renderBoard(); renderHistory(); updateBingoLetters(countLines(marks));
+            if (checkWinSingle()) return;
+            yourTurn = true; updateTurnLabel();
+        }
+        function checkWinSingle() {
+            let pL = countLines(marks), aL = countLines(aiMarks);
+            if (pL >= 5 && aL >= 5) { gameOver = true; document.getElementById('winSound').play(); showModalBody("<h2>🤝 Draw!</h2>"); return true; }
+            if (pL >= 5) { gameOver = true; document.getElementById('winSound').play(); showModalBody("<h2>🎉 You Win!</h2>"); return true; }
+            if (aL >= 5) { gameOver = true; document.getElementById('winSound').play(); showModalBody("<h2>🤖 AI Wins!</h2>"); return true; }
+            return false;
         }
 
-        /* ==== Multiplayer ==== */
+        // multiplayer
         function createRoom() {
-            roomCode = Math.floor(100000 + Math.random() * 900000);
-            playerId = "P" + Math.floor(Math.random() * 10000);
-            isCreator = true;
-            board = generateBoard(); marks = Array(25).fill(false); calledNumbers = []; gameOver = false;
+            roomCode = Math.floor(100000 + Math.random() * 900000); playerId = "P" + Math.floor(Math.random() * 10000);
+            board = generateBoard(); marks = Array(25).fill(false);
+            calledNumbers = []; gameOver = false; yourTurn = true;
             db.ref('rooms/' + roomCode).set({
-                calledNumbers: [],
-                players: {
-                    [playerId]: { board: board, marks: marks }
-                }
+                calledNumbers: [], turn: playerId,
+                players: { [playerId]: { board: board, marks: marks } }
             });
             subscribeRoom();
-            showModal(`<h2>Room Created</h2><p>Code: <b>${roomCode}</b></p><button class="primary" onclick="closeModal()">OK</button>`);
+            document.getElementById('welcomeScreen').style.display = 'none';
+            document.getElementById('gameArea').style.display = 'flex';
+            showModalBody(`<h2>Room Created</h2><p>Code: <b>${roomCode}</b></p>`);
         }
         function joinRoomPrompt() {
-            showModal(`<h2>Join Room</h2><input type="text" id="joinCode" placeholder="Enter code"><br>
-  <button class="primary" onclick="joinRoom()">Join</button>`);
+            showModalBody('<h2>Join Room</h2><input type="text" id="joinCode" placeholder="Enter code" maxlength="6" style="text-align:center;font-size:16px;padding:8px;width:80%;"><br><button class="mode-btn" onclick="joinRoom()">Join</button>');
         }
         function joinRoom() {
-            let code = document.getElementById('joinCode').value.trim();
-            if (!code) return;
-            roomCode = code; playerId = "P" + Math.floor(Math.random() * 10000);
+            let code = document.getElementById('joinCode').value.trim(); if (!code) return;
+            closeModal(); roomCode = code; playerId = "P" + Math.floor(Math.random() * 10000);
             board = generateBoard(); marks = Array(25).fill(false);
-            db.ref('rooms/' + roomCode + '/players/' + playerId).set({ board: board, marks: marks });
-            subscribeRoom();
-            closeModal();
+            db.ref('rooms/' + roomCode + '/players/' + playerId).set({ board: board, marks: marks }).then(() => {
+                subscribeRoom();
+                document.getElementById('welcomeScreen').style.display = 'none';
+                document.getElementById('gameArea').style.display = 'flex';
+            });
+            db.ref('rooms/' + roomCode + '/turn').transaction(turn => turn || playerId);
         }
         function subscribeRoom() {
-            document.getElementById('playerLabel').textContent = "You (Room " + roomCode + ")";
-            document.getElementById('gameArea').style.display = '';
+            document.getElementById('playerLabel').textContent = `You (Room ${roomCode})`;
             db.ref('rooms/' + roomCode).on('value', snap => {
                 const val = snap.val(); if (!val) return;
-                if (val.players && val.players[playerId]) {
-                    board = val.players[playerId].board;
+                if (Object.keys(val.players || {}).length > 1) { closeModal(); } // auto-close code modal on join
+                if (val.players && val.players[playerId] && val.players[playerId].marks) {
                     marks = val.players[playerId].marks;
                 }
                 calledNumbers = val.calledNumbers || [];
-                renderBoard(); renderHistory();
-                // Win detection
-                if (countLines(marks) >= 5 && !gameOver) {
-                    gameOver = true; document.getElementById('winSound').play();
-                    showModal(`<h2>🎉 You got Bingo!</h2><button class="primary" onclick="closeModal()">OK</button>`);
-                }
+                yourTurn = val.turn === playerId;
+                gameOver = (countLines(marks) >= 5);
+                renderBoard(); renderHistory(); updateTurnLabel(); updateBingoLetters(countLines(marks));
+                if (gameOver) { document.getElementById('winSound').play(); showModalBody("<h2>🎉 Bingo!</h2>"); }
             });
         }
         function callNumberMulti(num) {
-            if (!roomCode || !num || num < 1 || num > 25 || calledNumbers.includes(num) || gameOver) return;
+            if (!yourTurn || !roomCode || !num || num < 1 || num > 25 || calledNumbers.includes(num) || gameOver) return;
             calledNumbers.push(num);
-            // mark for this player
-            board.forEach((val, idx) => { if (val === num) marks[idx] = true; });
-            db.ref('rooms/' + roomCode + '/calledNumbers').set(calledNumbers);
-            db.ref('rooms/' + roomCode + '/players/' + playerId + '/marks').set(marks);
-            document.getElementById('markSound').play();
+            // mark on all players boards
+            db.ref(`rooms/${roomCode}/players`).once('value').then(snap => {
+                const players = snap.val() || {};
+                Object.entries(players).forEach(([pid, pdata]) => {
+                    let updatedMarks = [...pdata.marks];
+                    pdata.board.forEach((val, idx) => { if (val === num) updatedMarks[idx] = true; });
+                    db.ref(`rooms/${roomCode}/players/${pid}/marks`).set(updatedMarks);
+                });
+                db.ref(`rooms/${roomCode}/calledNumbers`).set(calledNumbers);
+                document.getElementById('markSound').play();
+                // pass turn
+                db.ref(`rooms/${roomCode}`).once('value').then(roomSnap => {
+                    const val = roomSnap.val(), opp = Object.keys(val.players).find(p => p !== playerId);
+                    if (opp) db.ref(`rooms/${roomCode}/turn`).set(opp);
+                });
+            });
         }
 
-        /* ==== Events ==== */
-        document.getElementById('btnSingle').onclick = () => { mode = "single"; setupSingle(); closeModal(); }
-        document.getElementById('btnMulti').onclick = () => {
-            mode = "multi";
-            showModal(`<h2>Multiplayer</h2>
-    <button class="primary" onclick="createRoom()">Create Room</button>
-    <button class="primary" onclick="joinRoomPrompt()">Join Room</button>`);
-        };
+        // events
+        document.getElementById('btnSingle').onclick = () => { mode = "single"; setupSingle(); };
+        document.getElementById('btnMulti').onclick = () => { mode = "multi"; showModalBody('<h2>Multiplayer</h2><button class="mode-btn" onclick="createRoom()">Create Room</button><button class="mode-btn" onclick="joinRoomPrompt()">Join Room</button>'); };
         document.getElementById('btnCall').onclick = () => {
             let n = parseInt(document.getElementById('calledNumber').value);
             document.getElementById('calledNumber').value = '';
             if (mode === "single") callNumberSingle(n); else callNumberMulti(n);
         };
-        document.getElementById('btnNewGame').onclick = () => {
-            if (mode === "single") setupSingle();
-            else showModal(`<h2>Restart</h2><p>Leave and create/join a new room for a fresh game</p><button class="primary" onclick="closeModal()">OK</button>`);
-        };
-
-        /* ==== Start ==== */
-        setupSingle();
     </script>
 </body>
 
